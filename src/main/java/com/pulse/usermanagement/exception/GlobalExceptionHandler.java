@@ -3,9 +3,11 @@ package com.pulse.usermanagement.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +41,22 @@ public class GlobalExceptionHandler {
                 .toList();
 
         return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableBody(HttpMessageNotReadableException ex,
+                                                                 HttpServletRequest request) {
+        // Covers malformed JSON and invalid enum values (e.g. userType: "MANAGER")
+        return buildResponse(HttpStatus.BAD_REQUEST,
+                "Malformed request body. Please check the field values and formatting.", request, null);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+                                                               HttpServletRequest request) {
+        // Covers a non-numeric id in the URL path, e.g. /api/users/{id} sent literally
+        String message = "Invalid value for parameter '" + ex.getName() + "': " + ex.getValue();
+        return buildResponse(HttpStatus.BAD_REQUEST, message, request, null);
     }
 
     @ExceptionHandler(Exception.class)
