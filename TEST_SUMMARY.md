@@ -11,6 +11,13 @@
 ## Architecture
 
 Layered structure:
+controller/ -> UserController REST endpoints
+service/ -> UserService business logic + rules
+repository/ -> UserRepository Spring Data JPA
+entity/ -> User, UserType JPA entity + enum
+dto/ -> UserRequest, UserResponse request validation / response shape
+exception/ -> custom exceptions + GlobalExceptionHandler (@RestControllerAdvice)
+
 
 ## Endpoints
 
@@ -51,16 +58,20 @@ All scenarios below were executed manually and passed:
 - ✅ Get user by ID → 200 OK, correct user returned
 - ✅ Update a user (PUT) → 200 OK, fields updated correctly
 - ✅ Delete a CUSTOMER → 204 No Content
-- ✅ Empty/too-short name → 400 Bad Request, field-level message returned
+- ✅ Empty name (`""`) → 400 Bad Request, field-level message returned
+- ✅ Too-short name (`"AB"`, below 3-char minimum) → 400 Bad Request
 - ✅ Invalid email format → 400 Bad Request, field-level message returned
-- ✅ Invalid age (below 18) → 400 Bad Request, field-level message returned
+- ✅ Invalid age — below 18 → 400 Bad Request, field-level message returned
+- ✅ Invalid age — above 100 → 400 Bad Request, field-level message returned
 - ✅ Invalid user type value (e.g. "MANAGER") → 400 Bad Request
 - ✅ Create a duplicate-email user → 409 Conflict
 - ✅ Create an ADMIN under 21 (age 19) → 400 Bad Request
 - ✅ Create 5 valid ADMIN users (age ≥ 21, unique emails) → all 201 Created
 - ✅ Create a 6th ADMIN → 409 Conflict (max ADMIN cap enforced)
 - ✅ Delete an ADMIN user → 409 Conflict (deletion blocked)
-- ✅ Get / update / delete a non-existent user ID → 404 Not Found
+- ✅ Get a non-existent user ID → 404 Not Found
+- ✅ Update (PUT) a non-existent user ID → 404 Not Found
+- ✅ Delete a non-existent user ID → 404 Not Found
 - ✅ Malformed/non-numeric ID in the URL path → 400 Bad Request
 
 Data was confirmed to persist correctly in PostgreSQL across requests (Hibernate
